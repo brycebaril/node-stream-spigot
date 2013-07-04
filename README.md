@@ -44,6 +44,8 @@ var spigot = require("stream-spigot")
 var stream = spigot(options)
 ```
 
+See test/index.js for additional examples.
+
 Options
 =======
 
