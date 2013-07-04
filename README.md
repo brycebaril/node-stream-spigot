@@ -68,3 +68,8 @@ maxSize
 -------
 
 The maximum size (in bytes) to output. Useful with wrap. Does not respect passed content and can thus be used to simulate truncated output.
+
+LICENSE
+=======
+
+MIT
