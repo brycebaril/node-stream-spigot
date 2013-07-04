@@ -3,6 +3,10 @@
   "version": "1.0.0",
   "description": "A readable stream generator, mostly useful for testing.",
   "main": "index.js",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/brycebaril/node-stream-spigot"
+  },
   "directories": {
     "test": "test"
   },
