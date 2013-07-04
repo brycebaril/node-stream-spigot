@@ -1,0 +1,26 @@
+{
+  "name": "stream-spigot",
+  "version": "1.0.0",
+  "description": "A readable stream generator, mostly useful for testing.",
+  "main": "index.js",
+  "directories": {
+    "test": "test"
+  },
+  "scripts": {
+    "test": "tap test/"
+  },
+  "keywords": [
+    "streams2",
+    "testing",
+    "readable"
+  ],
+  "author": "Bryce B. Baril",
+  "license": "MIT",
+  "devDependencies": {
+    "concat-stream": "~1.0.0",
+    "tap": "~0.4.3"
+  },
+  "dependencies": {
+    "readable-stream": "~1.0.2"
+  }
+}
