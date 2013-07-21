@@ -1,7 +1,7 @@
 Stream Spigot
 =============
 
-A generator for (streams2) Readable streams, useful for testing.
+A generator for (streams2) Readable streams, useful for testing or converting simple lazy functions into Readable streams.
 
 ```
 npm install stream-spigot
@@ -12,26 +12,33 @@ Examples:
 ```javascript
 var spigot = require("stream-spigot")
 
-spigot().pipe(process.stdout)
-// ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789abcdefghijklmnopqrstuvwxyz
+spigot(["ABCDEFG"]).pipe(process.stdout)
+// ABCDEFG
 
-spigot({content: "lalala"}).pipe(process.stdout)
-// lalala
+spigot(["ABC", "DEF", "G"]).pipe(process.stdout)
+// ABCDEFG
 
-spigot({wrap: true}).pipe(process.stdout)
+var count = 0
+function gen() {
+  if (count++ < 5) {
+    return {val: count}
+  }
+}
+
+spigot(gen, {objectMode: true}).pipe(...)
 /*
-ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789abcdefghijklmnopqrstuvwxyz ... (and so on until you CTRL^C)
+{val: 1}
+{val: 2}
+{val: 3}
+{val: 4}
+{val: 5}
 */
 
-
-spigot({wrap: true, maxSize: 200}).pipe(process.stdout)
-/*
-ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMN
-*/
-
-var petSounds = {cat: "Meow", dog: "Woof", bird: "tweet", fish: "..."}
-spigot({content: petSounds, chunkSize: 10}).pipe(process.stdout)
-// {"cat":"Meow","dog":"Woof","bird":"tweet","fish":"..."}
+// Do it asynchronously: (next expects fn(err, data))
+function get(next) {
+  some_async_op(/*..*/, next)
+}
+spigot(get).pipe(...)
 
 ```
 
@@ -41,33 +48,43 @@ Usage
 ```javascript
 var spigot = require("stream-spigot")
 
-var stream = spigot(options)
+var stream = spigot(some_function, [options])
+// or
+var stream = spigot(array, [options])
 ```
 
-See test/index.js for additional examples.
+
+spigot(fn)
+----------
+
+Until I settle on a better API, spigot will sniff the arity of the generator function you pass it. If your function expects no arguments, it will call it synchronously and buffer each reply as a chunk. Return null to end the stream.
+
+If the generator function expects a single argument, it expects it to be asynchronous. It will call your function like so: `generator(next)` where it proivides `next` as a callback expecting to be called like `next(err, data)`. If an error is encountered, spigot will emit an "error" event with your error. If there is no error, data will be buffered into the stream. The stream will be ended if data is ever null.
+
+spigot(array)
+-------------
+
+The spigot will consecutively write each element from the specified array as a buffered chunk until the array has been consumed. If the array contains contents other than Strings or Buffers, you should consider using `{objectMode: true}` to create this as an objectMode stream.
+
+If your array contains a `null` value, the stream will end at that value instead of consuming the entire array.
+
+Sending an array is equivalent to doing the following:
+
+```javascript
+var a = ["my", "array"]
+function fn() {
+  return a.shift()
+}
+
+var stream = spigot(fn)
+// will be equivalent to
+var stream = spigot(a)
+```
 
 Options
-=======
-
-content
 -------
 
-Content to stream. If not a string, it will call JSON.stringify(content) and stream that.
-
-chunkSize
----------
-
-Default chunk size to split the stream into. No default value, if you don't specify one, it will be chunked in the Readable streams (current) default high water mark of 16 * 1024
-
-wrap
-----
-
-To make longer streams, this will wrap `content` and cycle through the content forever or until `maxSize`.
-
-maxSize
--------
-
-The maximum size (in bytes) to output. Useful with wrap. Does not respect passed content and can thus be used to simulate truncated output.
+Accepts standard [readable-stream](http://npmjs.org/api/stream.html) options.
 
 LICENSE
 =======

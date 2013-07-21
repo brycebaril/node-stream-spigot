@@ -1,66 +1,61 @@
 module.exports = Spigot
 
 var Readable = require("stream").Readable
-if (!Readable) {
-  Readable = require("readable-stream/readable")
-}
+
+// v0.8.x compat
+if (!Readable) Readable = require("readable-stream/readable")
+if (!global.setImmediate) setImmediate = process.nextTick
 
 var util = require("util")
 
-var DEFAULT_CONTENT = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789abcdefghijklmnopqrstuvwxyz"
-
 /**
- * A source stream to provide a stream of content. Useful for testing.
- * @constructor
- * @param {object} options Options
- *         options.content (default "A-Z0-9a-z") -- Content to stream. If not a string, will use JSON.stringify()
- *         options.wrap (default false) -- Keep wrapping the content until the desired stream size has been made
- *         options.maxSize (no default) -- An optional maximum size to emit, useful with options.wrap
- *         options.chunkSize (no default) -- How big of chunks to send at once. If none specified will respect the size requested.
- *         ... and node stream.Readable options (ymmv)
+ * Create a spigot -- a Readable stream providing the data you specify.
+ *
+ * @param {Array or Function} source An Array of data to stream one-at-a-time, or a generating function that returns data when called.
  */
-function Spigot(options) {
-  if (!(this instanceof Spigot)) return new Spigot(options)
+function Spigot(source, options) {
+  if (!(this instanceof Spigot)) return new Spigot(source, options)
   Readable.call(this, options)
 
-  options = options || {}
-  var content = options.content || DEFAULT_CONTENT
-
-  if (typeof content != "string") {
-    content = JSON.stringify(content)
+  if (Array.isArray(source)) {
+    this.generator = function (next) {
+      setImmediate(function () {
+        return next(null, source.shift())
+      })
+    }
   }
-
-  this.wrap = options.wrap
-  this.chunkSize = options.chunkSize
-  this.maxSize = options.maxSize || Number.MAX_VALUE
-
-  this.bytes = 0
-
-  this.source = content.split("")
+  if (typeof source == "function") {
+    if (source.length == 0) {
+      this.generator = function (next) {
+        setImmediate(function () {
+          return next(null, source())
+        })
+      }
+    }
+    else if (source.length == 1) {
+      this.generator = source
+    }
+    else {
+      throw new Error("Source function should be of arity 0 (synchronous) or 1 (asynchronous)")
+    }
+  }
+  if (!this.generator) throw new Error("Please provide a data source of an array or a function that returns data")
 }
 util.inherits(Spigot, Readable)
 
-Spigot.prototype._read = function (n) {
-  var next = this._next(this.chunkSize || n)
-  var self = this
-  setImmediate(function () {
-    self.push(next)
-  })
-  if (next) this.emit("progress", next.length)
-}
+// Spigot.prototype._read = function (n) {
+//   var self = this
+//   setImmediate(function () {
+//     var data = self.generator()
+//     self.push(data)
+//   })
+// }
 
-Spigot.prototype._next = function (n) {
-  if (this.source.length == 0) return null
-  var row = []
-  for (var i = 0; i < n; i++) {
-    if (this.bytes >= this.maxSize) break
-    var c = this.source.shift()
-    if (this.wrap) this.source.push(c)
-    if (c != null) {
-      row.push(c)
-      this.bytes++
-    }
+Spigot.prototype._read = function (n) {
+  var self = this
+  function next(err, data) {
+    if (err) this.emit("error", err)
+    self.push(data)
   }
-  if (row.length == 0) return null
-  return new Buffer(row.join(""))
+  this.generator(next)
 }

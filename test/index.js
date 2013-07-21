@@ -3,9 +3,6 @@ var concat = require("concat-stream")
 
 var spigot
 
-var DEFAULT_CONTENT = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789abcdefghijklmnopqrstuvwxyz"
-
-// Stats
 test("load", function (t) {
   t.plan(1)
 
@@ -16,168 +13,105 @@ test("load", function (t) {
 test("simple", function (t) {
   t.plan(1)
 
+  var content = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+
   function match(d) {
-    t.equals(d.toString(), DEFAULT_CONTENT)
+    t.equals(d.toString(), content)
   }
 
-  var s = spigot().pipe(concat(match))
+  var s = spigot([content]).pipe(concat(match))
 })
 
-test("provided string", function (t) {
+test("chunked", function (t) {
   t.plan(1)
 
-  var provided = "Sup, world?"
+  var content = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
 
   function match(d) {
-    t.equals(d.toString(), provided)
+    t.equals(d.toString(), content)
   }
 
-  var s = spigot({content: provided}).pipe(concat(match))
+  var s = spigot(["ABCDEFG","HIJKLMNOPQ","RSTUVWXYZ"]).pipe(concat(match))
 })
 
-test("simple chunked", function (t) {
-  t.plan(7)
+test("null in array", function (t) {
+  t.plan(1)
 
-  var chunks = 0
-  var chunkSize = 10
-
-  var s = spigot({chunkSize: chunkSize})
-  s.on("progress", function (size) {
-    chunks++
-    t.ok(size <= chunkSize, "Chunks are at most the desired size")
-  })
+  var content = "AB"
 
   function match(d) {
-    t.equals(d.toString(), DEFAULT_CONTENT)
-    t.equals(chunks, Math.ceil(DEFAULT_CONTENT.length / chunkSize))
+    t.equals(d.toString(), content)
   }
 
-  s.pipe(concat(match))
+  var s = spigot(["A", "B", null, "C"]).pipe(concat(match))
 })
 
-test("object", function (t) {
+test("objectMode", function (t) {
   t.plan(1)
 
   var input = {cats: "meow", dogs: "woof"}
 
   function match(d) {
-    t.equals(d.toString(), JSON.stringify(input))
+    t.equals(d[0], input)
   }
 
-  var s = spigot({content: input}).pipe(concat(match))
+  var s = spigot([input], {objectMode: true}).pipe(concat(match))
 })
 
-test("object chunked", function (t) {
-  t.plan(5)
+test("function", function (t) {
+  t.plan(1)
 
-  var chunks = 0
-  var chunkSize = 10
-
-  var input = {cats: "meow", dogs: "woof"}
-
-  var s = spigot({chunkSize: chunkSize, content: input})
-  s.on("progress", function (size) {
-    chunks++
-    t.ok(size <= chunkSize, "Chunks are at most the desired size")
-  })
+  var c = 0
+  var fn = function () {
+    if (c++ < 5) {
+      return c.toString()
+    }
+  }
 
   function match(d) {
-    var s = JSON.stringify(input)
-    t.equals(d.toString(), s)
-    t.equals(chunks, Math.ceil(s.length / chunkSize))
+    t.equals(d.toString(), "12345")
   }
 
-  s.pipe(concat(match))
+  var s = spigot(fn).pipe(concat(match))
 })
 
-test("wrap with maxSize", function (t) {
-  t.plan(102)
+test("async function", function (t) {
+  t.plan(1)
 
-  var chunks = 0
-  var chunkSize = 10
-  var maxSize = 1000
-
-  var s = spigot({
-    chunkSize: chunkSize,
-    maxSize: maxSize,
-    wrap: true
-  })
-  s.on("progress", function (size) {
-    chunks++
-    t.ok(size <= chunkSize, "Chunks are at most the desired size")
-  })
-
-  function match(d) {
-    t.equals(d.toString().length, maxSize)
-    t.equals(chunks, Math.ceil(maxSize / chunkSize))
-  }
-
-  s.pipe(concat(match))
-})
-
-test("very large", function (t) {
-  t.plan(2)
-
-  var chunks = 0
-  var maxSize = 20000
-
-  var s = spigot({
-    maxSize: maxSize,
-    wrap: true
-  })
-  s.on("progress", function (size) {
-    chunks++
-  })
-
-  function match(d) {
-    t.equals(d.toString().length, maxSize)
-    // This will be 2 because the default high water mark is 16 * 1024
-    t.equals(chunks, 2)
-  }
-
-  s.pipe(concat(match))
-})
-
-test("read with size", function (t) {
-  t.plan(2)
-
-  var s = spigot()
-
-  var out = s.read(11)
-  s.once("readable", function () {
-    out = s.read(11)
-    t.equals(out.toString(), "ABCDEFGHIJK")
-    t.equals(out.toString(), DEFAULT_CONTENT.substring(0, 11))
-  })
-})
-
-test("read with ignored size", function (t) {
-  t.plan(3)
-
-  var chunks = 0
-  var chunkSize = 10
-
-  var s = spigot({chunkSize: chunkSize})
-  s.on("progress", function (size) {
-    chunks++
-  })
-
-  function tryReading(chunkSize, cb) {
-    var out = s.read(chunkSize)
-    if (out != null) {
-      cb(out)
+  var c = 0
+  var fn = function (cb) {
+    if (c++ < 5) {
+      setTimeout(function () {
+        return cb(null, c.toString())
+      }, 100)
     }
     else {
-      s.once("readable", function () {
-        tryReading(chunkSize, cb)
-      })
+      setTimeout(function () {
+        return cb(null, null)
+      }, 100)
     }
   }
 
-  tryReading(11, function (out) {
-    t.equals(out.toString(), "ABCDEFGHIJK")
-    t.equals(out.toString(), DEFAULT_CONTENT.substring(0, 11))
-    // Third read is because tryReading trigger a third frame even though it doesn't need it
-    t.equals(chunks, 3)
-  })
+  function match(d) {
+    t.equals(d.toString(), "12345")
+  }
+
+  var s = spigot(fn).pipe(concat(match))
+})
+
+test("function objectMode", function (t) {
+  t.plan(1)
+
+  var c = 0
+  var fn = function () {
+    if (c++ < 5) {
+      return {val: c}
+    }
+  }
+
+  function match(d) {
+    t.equivalent(d, [{val: 1}, {val: 2}, {val: 3}, {val: 4}, {val: 5}])
+  }
+
+  var s = spigot(fn, {objectMode: true}).pipe(concat(match))
 })
