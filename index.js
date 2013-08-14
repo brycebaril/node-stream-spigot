@@ -11,10 +11,15 @@ var util = require("util")
 /**
  * Create a spigot -- a Readable stream providing the data you specify.
  *
+ * @param {Object} options streams2 options for a Readable stream (optional)
  * @param {Array or Function} source An Array of data to stream one-at-a-time, or a generating function that returns data when called.
  */
-function Spigot(source, options) {
-  if (!(this instanceof Spigot)) return new Spigot(source, options)
+function Spigot(options, source) {
+  if (!(this instanceof Spigot)) return new Spigot(options, source)
+  if (Array.isArray(options) || typeof options == "function") {
+    source = options
+    options = {}
+  }
   Readable.call(this, options)
 
   if (Array.isArray(source)) {
@@ -42,14 +47,6 @@ function Spigot(source, options) {
   if (!this.generator) throw new Error("Please provide a data source of an array or a function that returns data")
 }
 util.inherits(Spigot, Readable)
-
-// Spigot.prototype._read = function (n) {
-//   var self = this
-//   setImmediate(function () {
-//     var data = self.generator()
-//     self.push(data)
-//   })
-// }
 
 Spigot.prototype._read = function (n) {
   var self = this

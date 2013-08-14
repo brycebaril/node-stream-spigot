@@ -55,7 +55,7 @@ test("objectMode", function (t) {
     t.equals(d[0], input)
   }
 
-  var s = spigot([input], {objectMode: true}).pipe(concat(match))
+  var s = spigot({objectMode: true}, [input]).pipe(concat(match))
 })
 
 test("function", function (t) {
@@ -113,5 +113,5 @@ test("function objectMode", function (t) {
     t.equivalent(d, [{val: 1}, {val: 2}, {val: 3}, {val: 4}, {val: 5}])
   }
 
-  var s = spigot(fn, {objectMode: true}).pipe(concat(match))
+  var s = spigot({objectMode: true}, fn).pipe(concat(match))
 })
