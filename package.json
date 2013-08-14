@@ -1,6 +1,6 @@
 {
   "name": "stream-spigot",
-  "version": "2.0.0",
+  "version": "2.1.0",
   "description": "A readable stream generator, useful for testing or converting simple functions into Readable streams.",
   "main": "index.js",
   "repository": {
