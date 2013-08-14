@@ -25,7 +25,7 @@ function gen() {
   }
 }
 
-spigot(gen, {objectMode: true}).pipe(...)
+spigot({objectMode: true}, gen).pipe(...)
 /*
 {val: 1}
 {val: 2}
@@ -48,21 +48,23 @@ Usage
 ```javascript
 var spigot = require("stream-spigot")
 
-var stream = spigot(some_function, [options])
+var stream = spigot(some_function)
 // or
-var stream = spigot(array, [options])
+var stream = spigot(array)
+// or
+var stream = spigot({objectMode: true}, )
 ```
 
 
-spigot(fn)
+spigot([options,] fn)
 ----------
 
 Until I settle on a better API, spigot will sniff the arity of the generator function you pass it. If your function expects no arguments, it will call it synchronously and buffer each reply as a chunk. Return null to end the stream.
 
 If the generator function expects a single argument, it expects it to be asynchronous. It will call your function like so: `generator(next)` where it proivides `next` as a callback expecting to be called like `next(err, data)`. If an error is encountered, spigot will emit an "error" event with your error. If there is no error, data will be buffered into the stream. The stream will be ended if data is ever null.
 
-spigot(array)
--------------
+spigot([options,] array)
+------------------------
 
 The spigot will consecutively write each element from the specified array as a buffered chunk until the array has been consumed. If the array contains contents other than Strings or Buffers, you should consider using `{objectMode: true}` to create this as an objectMode stream.
 
