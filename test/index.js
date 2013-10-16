@@ -1,4 +1,4 @@
-var test = require("tap").test
+var test = require("tape").test
 var concat = require("concat-stream")
 
 var spigot
@@ -110,7 +110,7 @@ test("function objectMode", function (t) {
   }
 
   function match(d) {
-    t.equivalent(d, [{val: 1}, {val: 2}, {val: 3}, {val: 4}, {val: 5}])
+    t.deepEquals(d, [{val: 1}, {val: 2}, {val: 3}, {val: 4}, {val: 5}])
   }
 
   var s = spigot({objectMode: true}, fn).pipe(concat(match))

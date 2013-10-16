@@ -11,7 +11,7 @@
     "test": "test"
   },
   "scripts": {
-    "test": "tap test/"
+    "test": "node test/"
   },
   "keywords": [
     "streams2",
@@ -22,7 +22,7 @@
   "license": "MIT",
   "devDependencies": {
     "concat-stream": "~1.0.1",
-    "tap": "~0.4.4"
+    "tape": "~2.0.0"
   },
   "dependencies": {
     "readable-stream": "~1.1.9"
