@@ -25,6 +25,7 @@
     "tape": "~2.0.0"
   },
   "dependencies": {
-    "readable-stream": "~1.1.9"
+    "readable-stream": "~1.1.9",
+    "xtend": "~2.1.1"
   }
 }

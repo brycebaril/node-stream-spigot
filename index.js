@@ -1,58 +1,74 @@
-module.exports = Spigot
+module.exports = make
+module.exports.ctor = ctor
 
-var Readable = require("stream").Readable
+module.exports.array = array
+module.exports.sync = sync
 
-// v0.8.x compat
-if (!Readable) Readable = require("readable-stream/readable")
-if (!global.setImmediate) setImmediate = process.nextTick
+const Readable = require("stream").Readable || require("readable-stream/readable")
+    , inherits = require("util").inherits
+    , xtend    = require("xtend")
+    , setImmediate = global.setImmediate || process.nextTick
 
-var util = require("util")
+function ctor (options, _read) {
+  if (_read == null) {
+    _read    = options
+    options   = {}
+  }
 
-/**
- * Create a spigot -- a Readable stream providing the data you specify.
- *
- * @param {Object} options streams2 options for a Readable stream (optional)
- * @param {Array or Function} source An Array of data to stream one-at-a-time, or a generating function that returns data when called.
- */
-function Spigot(options, source) {
-  if (!(this instanceof Spigot)) return new Spigot(options, source)
-  if (Array.isArray(options) || typeof options == "function") {
-    source = options
+  if (Array.isArray(_read))
+    _read = _shifter(_read)
+
+  if (typeof _read != "function")
+    throw new Error("You must implement an _read function for Spigot")
+
+  function Spigot (override) {
+    if (!(this instanceof Spigot))
+      return new Spigot(override)
+
+    this.options = xtend(options, override)
+    Readable.call(this, this.options)
+  }
+
+  inherits(Spigot, Readable)
+
+  Spigot.prototype._read = _read
+
+  return Spigot
+}
+
+function make(options, _read) {
+  return ctor(options, _read)()
+}
+
+function _shifter(array) {
+  var copy = array.slice(0)
+  return function () {
+    var self = this
+    setImmediate(function () {
+      self.push(copy.shift())
+    })
+  }
+}
+
+function array(options, array) {
+  if (Array.isArray(options)) {
+    array = options
     options = {}
   }
-  Readable.call(this, options)
 
-  if (Array.isArray(source)) {
-    this.generator = function (next) {
-      setImmediate(function () {
-        return next(null, source.shift())
-      })
-    }
-  }
-  if (typeof source == "function") {
-    if (source.length == 0) {
-      this.generator = function (next) {
-        setImmediate(function () {
-          return next(null, source())
-        })
-      }
-    }
-    else if (source.length == 1) {
-      this.generator = source
-    }
-    else {
-      throw new Error("Source function should be of arity 0 (synchronous) or 1 (asynchronous)")
-    }
-  }
-  if (!this.generator) throw new Error("Please provide a data source of an array or a function that returns data")
+  return make(options, _shifter(array))
 }
-util.inherits(Spigot, Readable)
 
-Spigot.prototype._read = function (n) {
-  var self = this
-  function next(err, data) {
-    if (err) this.emit("error", err)
-    self.push(data)
+function sync(options, fn) {
+  if (typeof options == "function") {
+    fn = options
+    options = {}
   }
-  this.generator(next)
+  var toAsync = function () {
+    var self = this
+    setImmediate(function () {
+      self.push(fn())
+    })
+  }
+  return make(options, toAsync)
 }
