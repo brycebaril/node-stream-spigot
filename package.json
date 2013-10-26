@@ -22,7 +22,7 @@
   "license": "MIT",
   "devDependencies": {
     "concat-stream": "~1.0.1",
-    "tape": "~2.0.0"
+    "tape": "~2.1.0"
   },
   "dependencies": {
     "readable-stream": "~1.1.9",
