@@ -13,6 +13,9 @@
   "scripts": {
     "test": "node test/"
   },
+  "browser": {
+    "readable-stream/readable": "_stream_readable"
+  },
   "keywords": [
     "streams2",
     "testing",
@@ -21,8 +24,8 @@
   "author": "Bryce B. Baril",
   "license": "MIT",
   "devDependencies": {
-    "concat-stream": "~1.0.1",
-    "tape": "~2.1.0"
+    "concat-stream": "~1.2.1",
+    "tape": "~2.3.2"
   },
   "dependencies": {
     "readable-stream": "~1.1.9",
