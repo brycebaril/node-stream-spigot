@@ -146,7 +146,7 @@ test("async objectMode", function (t) {
     t.deepEquals(d, [1, 2, 3, 4, 5])
   }
 
-  var s = spigot({objectMode: true}, fn).pipe(concat(match))
+  var s = spigot({objectMode: true}, fn).pipe(concat({encoding: "object"}, match))
 })
 
 test("async ctor", function (t) {
