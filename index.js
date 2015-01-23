@@ -4,7 +4,7 @@ module.exports.ctor = ctor
 module.exports.array = array
 module.exports.sync = sync
 
-const Readable = require("stream").Readable || require("readable-stream/readable")
+const Readable = require("readable-stream/readable")
     , inherits = require("util").inherits
     , xtend    = require("xtend")
     , setImmediate = global.setImmediate || process.nextTick
@@ -42,9 +42,14 @@ function make(options, _read) {
 
 function _shifter(array) {
   var copy = array.slice(0)
-  return function () {
+  return function _shift() {
     var self = this
-    setImmediate(function () {
+    setImmediate(function later() {
+      // var val = copy.shift()
+      // if (val === undefined) {
+      //   val = null
+      // }
+      // self.push(val)
       self.push(copy.shift())
     })
   }
@@ -64,9 +69,9 @@ function sync(options, fn) {
     fn = options
     options = {}
   }
-  var toAsync = function () {
+  var toAsync = function toAsync() {
     var self = this
-    setImmediate(function () {
+    setImmediate(function later() {
       self.push(fn())
     })
   }

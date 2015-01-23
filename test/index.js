@@ -1,14 +1,7 @@
 var test = require("tape").test
 var concat = require("concat-stream")
 
-var spigot
-
-test("load", function (t) {
-  t.plan(1)
-
-  spigot = require("../")
-  t.ok(spigot, "loaded module")
-})
+var spigot = require("../")
 
 test("simple", function (t) {
   t.plan(1)
