@@ -45,12 +45,11 @@ function _shifter(array) {
   return function _shift() {
     var self = this
     setImmediate(function later() {
-      // var val = copy.shift()
-      // if (val === undefined) {
-      //   val = null
-      // }
-      // self.push(val)
-      self.push(copy.shift())
+      var val = copy.shift()
+      if (val === undefined) {
+        val = null
+      }
+      self.push(val)
     })
   }
 }
@@ -72,7 +71,11 @@ function sync(options, fn) {
   var toAsync = function toAsync() {
     var self = this
     setImmediate(function later() {
-      self.push(fn())
+      var val = fn()
+      if (val === undefined) {
+        val = null
+      }
+      self.push(val)
     })
   }
   return make(options, toAsync)

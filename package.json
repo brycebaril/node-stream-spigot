@@ -24,11 +24,11 @@
   "author": "Bryce B. Baril",
   "license": "MIT",
   "devDependencies": {
-    "concat-stream": "~1.4.7",
-    "tape": "~3.4.0"
+    "concat-stream": "~1.6.0",
+    "tape": "~4.6.3"
   },
   "dependencies": {
-    "readable-stream": "~1.1.0",
+    "readable-stream": "~2.2.6",
     "xtend": "~4.0.0"
   }
 }
