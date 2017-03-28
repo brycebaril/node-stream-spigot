@@ -3,10 +3,6 @@ Stream Spigot
 
 [![NPM](https://nodei.co/npm/stream-spigot.png)](https://nodei.co/npm/stream-spigot/)
 
-[![david-dm](https://david-dm.org/brycebaril/node-stream-spigot.png)](https://david-dm.org/brycebaril/node-stream-spigot/)
-[![david-dm](https://david-dm.org/brycebaril/node-stream-spigot/dev-status.png)](https://david-dm.org/brycebaril/node-stream-spigot#info=devDependencies/)
-
-
 A generator for (streams2) Readable streams, useful for testing or converting simple lazy functions into Readable streams, or just creating Readable streams without all the boilerplate.
 
 ```javascript
