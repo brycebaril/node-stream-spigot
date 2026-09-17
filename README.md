@@ -82,6 +82,19 @@ spigot.sync([options,] fn)
 
 Create a readable instance providing a synchronous generator function. It will internally wrap your synchronous function as an async function.
 
+### A note on modern Node
+
+If you only need to turn an iterable/array into a Readable stream and you're on a recent
+Node.js version, the built-in `Readable.from()` may do what you need without a dependency:
+
+```javascript
+const { Readable } = require('stream')
+const reader = Readable.from([{ name: 'apple' }, { name: 'berry' }], { objectMode: true })
+```
+
+`stream-spigot` predates `Readable.from` and still provides the `sync()` generator helper
+and the iterator-based constructor, which remain useful for lazy sources.
+
 Options
 -------
 
